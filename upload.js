@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const store = require('./lib/productsStore');
 
 function upload() {
     let products = [];
@@ -12,10 +13,19 @@ function upload() {
         return;
     }
 
-    console.log("Uploading products...");
-    products.forEach(product => {
-        console.log(`Uploaded: ${product.name} ($${product.price})`);
-    });
+    console.log("Uploading products into DB (skipping existing names)...");
+    const existing = store.getAll().map(p => (p.name || '').toLowerCase());
+    let added = 0;
+    for (const product of products) {
+        if (existing.includes((product.name || '').toLowerCase())) {
+            console.log(`Skipping existing: ${product.name}`);
+            continue;
+        }
+        const created = store.create({ name: product.name, price: product.price, stock: product.stock || 0, image: product.image || null, images: product.images || null });
+        console.log(`Inserted: ${created.name} (id=${created.id})`);
+        added++;
+    }
+    console.log(`Upload complete. Added ${added} new products.`);
 }
 
 module.exports = upload;
