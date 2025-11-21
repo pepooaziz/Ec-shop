@@ -3,3 +3,7 @@ node_modules/
 .vscode/
 npm-debug.log
 *.log
+data/ecshop.db
+data/*.db
+public/uploads/
+.DS_Store
