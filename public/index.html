@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="ar">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EC-SHOP - المنتجات</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; padding: 20px; direction: rtl; }
+    h1 { margin-bottom: 8px }
+    .product { border: 1px solid #ddd; padding: 10px; margin-bottom: 8px; border-radius: 4px }
+    .price { font-weight: bold; color: #2b8a3e }
+    .stock { color: #666 }
+  </style>
+</head>
+<body>
+  <header style="display:flex; align-items:center; justify-content:space-between;">
+    <div style="display:flex; align-items:center; gap:12px">
+      <img src="/assets/logo.svg" alt="EC-SHOP" style="height:56px" />
+      <h1 style="margin:0">المنتجات</h1>
+    </div>
+    <div style="text-align:right">
+      <input id="search" placeholder="بحث..." />
+    </div>
+  </header>
+  <div id="status">جاري التحميل…</div>
+  <div id="list"></div>
+
+  <h2>إضافة / تعديل منتج</h2>
+  <form id="product-form">
+    <input type="hidden" id="product-id" />
+    <div>
+      <label>الاسم: <input id="name" required /></label>
+    </div>
+    <div>
+      <label>السعر: <input id="price" type="number" step="0.01" required /></label>
+    </div>
+    <div>
+      <label>المخزون: <input id="stock" type="number" /></label>
+    </div>
+    <div style="margin-top:8px">
+      <button type="submit">حفظ</button>
+      <button type="button" id="clear">مسح</button>
+    </div>
+  </form>
+
+  <script>
+    const status = document.getElementById('status');
+    const list = document.getElementById('list');
+    const form = document.getElementById('product-form');
+    const idField = document.getElementById('product-id');
+    const nameField = document.getElementById('name');
+    const priceField = document.getElementById('price');
+    const stockField = document.getElementById('stock');
+    const clearBtn = document.getElementById('clear');
+
+    async function load(q) {
+      try {
+        const url = q ? `/products?q=${encodeURIComponent(q)}` : '/products';
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Network response was not ok');
+        const products = await res.json();
+        status.textContent = `عدد المنتجات: ${products.length}`;
+        renderList(products);
+      } catch (err) {
+        status.textContent = 'فشل التحميل: ' + err.message;
+      }
+    }
+
+    document.getElementById('search').addEventListener('input', (e)=>{
+      load(e.target.value);
+    });
+
+    function renderList(products) {
+      if (!products.length) {
+        list.innerHTML = '<p>لا توجد منتجات.</p>';
+        return;
+      }
+      list.innerHTML = products.map(p => `
+        <div class="product" data-id="${p.id}">
+          <div><strong>${p.name}</strong></div>
+          <div class="price">السعر: $${p.price}</div>
+          <div class="stock">المخزون: ${p.stock ?? 0}</div>
+          <div style="margin-top:6px">
+            <button data-action="edit">تعديل</button>
+            <button data-action="delete">حذف</button>
+          </div>
+        </div>
+      `).join('');
+      // attach handlers
+      list.querySelectorAll('button[data-action="edit"]').forEach(btn => {
+        btn.addEventListener('click', onEdit);
+      });
+      list.querySelectorAll('button[data-action="delete"]').forEach(btn => {
+        btn.addEventListener('click', onDelete);
+      });
+    }
+
+    function onEdit(e) {
+      const div = e.target.closest('.product');
+      const id = div.getAttribute('data-id');
+      const name = div.querySelector('strong').textContent;
+      const price = div.querySelector('.price').textContent.replace(/[^0-9.]/g, '') || 0;
+      const stock = div.querySelector('.stock').textContent.replace(/[^0-9]/g, '') || 0;
+      idField.value = id;
+      nameField.value = name;
+      priceField.value = price;
+      stockField.value = stock;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function onDelete(e) {
+      if (!confirm('هل تريد حذف هذا المنتج؟')) return;
+      const div = e.target.closest('.product');
+      const id = div.getAttribute('data-id');
+      try {
+        const res = await fetch(`/products/${id}`, { method: 'DELETE' });
+        if (res.status === 204) {
+          load();
+        } else {
+          const json = await res.json();
+          alert('خطأ: ' + (json.error || res.status));
+        }
+      } catch (err) {
+        alert('شبكة: ' + err.message);
+      }
+    }
+
+    form.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const id = idField.value;
+      const payload = { name: nameField.value, price: Number(priceField.value), stock: Number(stockField.value || 0) };
+      try {
+        let res;
+        if (id) {
+          res = await fetch(`/products/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        } else {
+          res = await fetch('/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        }
+        if (res.ok) {
+          clearForm();
+          load();
+        } else {
+          const json = await res.json();
+          alert('خطأ: ' + (json.error || res.status));
+        }
+      } catch (err) {
+        alert('شبكة: ' + err.message);
+      }
+    });
+
+    clearBtn.addEventListener('click', (e) => { e.preventDefault(); clearForm(); });
+
+    function clearForm() {
+      idField.value = '';
+      nameField.value = '';
+      priceField.value = '';
+      stockField.value = '';
+    }
+
+    load();
+  </script>
+</body>
+</html>

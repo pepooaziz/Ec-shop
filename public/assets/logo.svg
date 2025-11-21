@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="60" viewBox="0 0 200 60">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1">
+      <stop offset="0" stop-color="#2b8a3e"/>
+      <stop offset="1" stop-color="#1071d3"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="60" rx="8" fill="#fff" />
+  <text x="16" y="36" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700" fill="url(#g)">EC-SHOP</text>
+  <circle cx="170" cy="30" r="18" fill="url(#g)" opacity="0.12" />
+</svg>
