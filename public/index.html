@@ -23,6 +23,12 @@
     </div>
   </header>
   <div id="status">جاري التحميل…</div>
+  <div id="token-area" style="margin:8px 0">
+    <label>توكن المصادقة: <input id="auth-token" style="width:320px" placeholder="الصق التوكن هنا" /></label>
+    <button id="save-token">حفظ</button>
+    <button id="clear-token">مسح</button>
+    <span id="token-status" style="margin-left:12px;color:#666"></span>
+  </div>
   <div id="list"></div>
 
   <h2>إضافة / تعديل منتج</h2>
@@ -127,7 +133,7 @@
       const div = e.target.closest('.product');
       const id = div.getAttribute('data-id');
       try {
-        const res = await fetch(`/products/${id}`, { method: 'DELETE' });
+        const res = await fetch(`/products/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
         if (res.status === 204) {
           load();
         } else {
@@ -162,9 +168,9 @@
       try {
         let res;
         if (id) {
-          res = await fetch(`/products/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+          res = await fetch(`/products/${id}`, { method: 'PUT', headers: getAuthHeaders('application/json'), body: JSON.stringify(payload) });
         } else {
-          res = await fetch('/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+          res = await fetch('/products', { method: 'POST', headers: getAuthHeaders('application/json'), body: JSON.stringify(payload) });
         }
         if (res.ok) {
           clearForm();
@@ -179,6 +185,30 @@
     });
 
     clearBtn.addEventListener('click', (e) => { e.preventDefault(); clearForm(); });
+
+    // token helpers
+    const authInput = document.getElementById('auth-token');
+    const saveTokenBtn = document.getElementById('save-token');
+    const clearTokenBtn = document.getElementById('clear-token');
+    const tokenStatus = document.getElementById('token-status');
+
+    function getAuthHeaders(contentType) {
+      const headers = {};
+      if (contentType) headers['Content-Type'] = contentType;
+      const t = localStorage.getItem('token');
+      if (t) headers['Authorization'] = 'Bearer ' + t;
+      return headers;
+    }
+
+    function refreshTokenUI() {
+      const t = localStorage.getItem('token');
+      authInput.value = t || '';
+      tokenStatus.textContent = t ? 'توكن محفوظ' : 'لم يتم حفظ توكن';
+    }
+
+    saveTokenBtn.addEventListener('click', () => { localStorage.setItem('token', authInput.value.trim()); refreshTokenUI(); });
+    clearTokenBtn.addEventListener('click', () => { localStorage.removeItem('token'); refreshTokenUI(); });
+    refreshTokenUI();
 
     function clearForm() {
       idField.value = '';
