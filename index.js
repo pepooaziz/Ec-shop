@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const upload = require("./upload");
 const productsRouter = require('./routes/products');
+const authRouter = require('./routes/auth');
 
 const app = express();
 const PORT = 3000;
@@ -19,6 +20,13 @@ app.post('/upload-image', uploadImg.single('image'), (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No file' });
     const rel = `/uploads/${req.file.filename}`;
     res.json({ path: rel });
+});
+
+// new: support multiple images upload
+app.post('/upload-images', uploadImg.array('images', 10), (req, res) => {
+    if (!req.files || !req.files.length) return res.status(400).json({ error: 'No files' });
+    const arr = req.files.map(f => `/uploads/${f.filename}`);
+    res.json({ paths: arr });
 });
 
 // قراءة المنتجات من الملف (مع تعامل آمن مع الأخطاء)
@@ -45,6 +53,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Mount products API
 app.use('/products', productsRouter);
+// Mount auth API
+app.use('/auth', authRouter);
 
 // Serve frontend at root (fallback)
 app.get('/', (req, res) => {

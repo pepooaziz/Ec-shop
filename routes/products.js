@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const store = require('../lib/productsStore');
 const { body, validationResult, query } = require('express-validator');
+const { authenticate } = require('../middleware/auth');
 
 // GET /products - list
 // GET /products - list (supports ?q=search)
@@ -28,6 +29,7 @@ router.post('/',
   body('name').isString().notEmpty(),
   body('price').isFloat({ gt: 0 }),
   body('stock').optional().isInt({ min: 0 }),
+  authenticate,
   (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ error: errors.array() });
@@ -43,6 +45,7 @@ router.put('/:id',
   body('name').optional().isString().notEmpty(),
   body('price').optional().isFloat({ gt: 0 }),
   body('stock').optional().isInt({ min: 0 }),
+  authenticate,
   (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ error: errors.array() });
@@ -53,7 +56,7 @@ router.put('/:id',
 );
 
 // DELETE /products/:id - delete
-router.delete('/:id', (req, res) => {
+router.delete('/:id', authenticate, (req, res) => {
   const ok = store.remove(req.params.id);
   if (!ok) return res.status(404).json({ error: 'Not found' });
   res.status(204).end();

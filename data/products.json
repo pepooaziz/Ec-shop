@@ -22,5 +22,12 @@
     "name": "كونتاكتور 750 امبير ABB",
     "price": 25000,
     "stock": 4
+  },
+  {
+    "id": 5,
+    "name": "SVG-logo-product",
+    "price": 1.5,
+    "stock": 1,
+    "image": "/uploads/1763748946675-logo.svg"
   }
 ]

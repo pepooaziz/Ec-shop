@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ar">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>تفاصيل المنتج</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;padding:20px;direction:rtl}
+    .gallery{display:flex;gap:10px;flex-wrap:wrap}
+    .gallery img{height:160px;border-radius:6px;object-fit:cover}
+  </style>
+</head>
+<body>
+  <a href="/">◀ رجوع</a>
+  <h1 id="title">تفاصيل المنتج</h1>
+  <div id="content">جاري التحميل…</div>
+
+  <script>
+    async function load() {
+      const params = new URLSearchParams(location.search);
+      const id = params.get('id');
+      if (!id) { document.getElementById('content').textContent = 'معرّف المنتج مفقود'; return; }
+      try {
+        const res = await fetch('/products/' + id);
+        if (!res.ok) throw new Error('لم يتم العثور على المنتج');
+        const p = await res.json();
+        document.getElementById('title').textContent = p.name;
+        const html = [];
+        html.push(`<div><strong>السعر:</strong> $${p.price}</div>`);
+        html.push(`<div><strong>المخزون:</strong> ${p.stock ?? 0}</div>`);
+        if (p.image && typeof p.image === 'string') html.push(`<div class="gallery"><img src="${p.image}" alt="${p.name}"/></div>`);
+        if (p.images && Array.isArray(p.images) && p.images.length) {
+          html.push('<div class="gallery">' + p.images.map(i=>`<img src="${i}"/>`).join('') + '</div>');
+        }
+        html.push(`<pre>JSON: ${JSON.stringify(p,null,2)}</pre>`);
+        document.getElementById('content').innerHTML = html.join('\n');
+      } catch (err) {
+        document.getElementById('content').textContent = 'خطأ: ' + err.message;
+      }
+    }
+    load();
+  </script>
+</body>
+</html>
