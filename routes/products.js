@@ -33,8 +33,8 @@ router.post('/',
   (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ error: errors.array() });
-    const { name, price, stock, image } = req.body;
-    const created = store.create({ name, price: Number(price), stock: Number(stock || 0), image });
+    const { name, price, stock, image, images } = req.body;
+    const created = store.create({ name, price: Number(price), stock: Number(stock || 0), image, images });
     res.status(201).json(created);
   }
 );

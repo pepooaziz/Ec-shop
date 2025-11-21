@@ -82,11 +82,16 @@
       list.innerHTML = products.map(p => `
           <div class="product" data-id="${p.id}">
             <div style="display:flex; gap:12px; align-items:center">
-              ${p.image ? `<img src="${p.image}" style="height:64px; object-fit:cover; border-radius:6px" />` : '<div style="width:64px;height:64px;background:#f5f5f5;border-radius:6px"></div>'}
+                  ${
+                    (p.images && p.images.length)
+                      ? `<img src="${p.images[0]}" style="height:64px; object-fit:cover; border-radius:6px" />`
+                      : (p.image ? `<img src="${p.image}" style="height:64px; object-fit:cover; border-radius:6px" />` : '<div style="width:64px;height:64px;background:#f5f5f5;border-radius:6px"></div>')
+                  }
               <div style="flex:1">
                 <div><strong>${p.name}</strong></div>
                 <div class="price">السعر: $${p.price}</div>
                 <div class="stock">المخزون: ${p.stock ?? 0}</div>
+                    ${p.images && p.images.length ? `<div style="margin-top:6px">` + p.images.slice(0,4).map(src=>`<img src="${src}" style="height:32px;width:32px;object-fit:cover;border-radius:4px;margin-left:6px"/>`).join('') + `</div>` : ''}
               </div>
               <div style="margin-top:6px">
                 <button data-action="edit">تعديل</button>
