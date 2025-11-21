@@ -29,6 +29,18 @@
     <button id="clear-token">مسح</button>
     <span id="token-status" style="margin-left:12px;color:#666"></span>
   </div>
+  <div id="login-inline" style="margin:8px 0">
+    <button id="open-login">تسجيل دخول (اسم/كلمة)</button>
+    <div id="login-inline-box" style="display:none; margin-top:8px; border:1px solid #eee; padding:8px; width:360px">
+      <label>اسم المستخدم: <input id="inline-username" value="admin" /></label>
+      <label style="margin-left:8px">كلمة المرور: <input id="inline-password" type="password" value="password" /></label>
+      <div style="margin-top:8px">
+        <button id="inline-login">دخول</button>
+        <button id="inline-cancel">إلغاء</button>
+      </div>
+      <div id="inline-login-msg" style="color:red; margin-top:8px"></div>
+    </div>
+  </div>
   <div id="list"></div>
 
   <h2>إضافة / تعديل منتج</h2>
@@ -209,6 +221,41 @@
     saveTokenBtn.addEventListener('click', () => { localStorage.setItem('token', authInput.value.trim()); refreshTokenUI(); });
     clearTokenBtn.addEventListener('click', () => { localStorage.removeItem('token'); refreshTokenUI(); });
     refreshTokenUI();
+
+    // Inline login behavior
+    const openLoginBtn = document.getElementById('open-login');
+    const loginInlineBox = document.getElementById('login-inline-box');
+    const inlineLoginBtn = document.getElementById('inline-login');
+    const inlineCancelBtn = document.getElementById('inline-cancel');
+    const inlineMsg = document.getElementById('inline-login-msg');
+
+    openLoginBtn.addEventListener('click', () => { loginInlineBox.style.display = loginInlineBox.style.display === 'none' ? 'block' : 'none'; inlineMsg.textContent = ''; });
+    inlineCancelBtn.addEventListener('click', () => { loginInlineBox.style.display = 'none'; inlineMsg.textContent = ''; });
+
+    inlineLoginBtn.addEventListener('click', async () => {
+      inlineMsg.textContent = '';
+      const username = document.getElementById('inline-username').value;
+      const password = document.getElementById('inline-password').value;
+      try {
+        const res = await fetch('/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) });
+        if (!res.ok) {
+          const j = await res.json().catch(()=>({ error: 'خطأ' }));
+          inlineMsg.textContent = j.error || ('خطأ: ' + res.status);
+          return;
+        }
+        const j = await res.json();
+        if (j.token) {
+          localStorage.setItem('token', j.token);
+          refreshTokenUI();
+          loginInlineBox.style.display = 'none';
+          alert('تم تسجيل الدخول بنجاح');
+        } else {
+          inlineMsg.textContent = 'لم يتم استلام توكن';
+        }
+      } catch (err) {
+        inlineMsg.textContent = err.message;
+      }
+    });
 
     function clearForm() {
       idField.value = '';
